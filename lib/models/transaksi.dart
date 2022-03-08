@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 class TransaksiModel {
   final int? id;
   final String kode_transaksi;

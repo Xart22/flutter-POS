@@ -1,3 +1,4 @@
+import 'package:bigsam_pos/pages/login.dart';
 import 'package:flutter/material.dart';
 import 'package:bigsam_pos/menu/home.dart';
 import 'package:bigsam_pos/menu/setting.dart';
@@ -16,21 +17,22 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const MyStatefulWidget(),
+      home: const LoginPage(),
       initialRoute: '/',
       routes: {
-        MyStatefulWidget.routeName: (context) => MyStatefulWidget(
+        MyStatefulWidget.routeName: (context) => const MyStatefulWidget(
               selectedmenu: 1,
+              username: '',
             ),
       },
       onGenerateRoute: (settings) {
-        print('onGenerateRoute: ${settings.name}');
         if (settings.name == MyStatefulWidget.routeName) {
           final args = settings.arguments as ScreenArguments;
-          print(args);
+
           return MaterialPageRoute(
             builder: (context) => MyStatefulWidget(
               selectedmenu: args.selectedmenu,
+              username: '',
             ),
           );
         }
@@ -41,8 +43,10 @@ class MyApp extends StatelessWidget {
 }
 
 class MyStatefulWidget extends StatefulWidget {
-  const MyStatefulWidget({this.selectedmenu, Key? key}) : super(key: key);
+  const MyStatefulWidget({this.selectedmenu, this.username, Key? key})
+      : super(key: key);
   final int? selectedmenu;
+  final String? username;
   static const routeName = '/menu';
 
   @override
@@ -52,15 +56,14 @@ class MyStatefulWidget extends StatefulWidget {
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   int _selectedIndex = 0;
   String _title = '';
-  List<Widget> _widgetOptions = [
-    Home(),
-    Transaksi(),
-    Setting(),
+  final List<Widget> _widgetOptions = [
+    const Home(),
+    const Transaksi(),
+    const Setting(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    print(widget.selectedmenu);
     if (widget.selectedmenu != null && _title == '') {
       _selectedIndex = widget.selectedmenu!;
       _title = 'bigsam';

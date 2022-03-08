@@ -27,7 +27,7 @@ class _PrinterPageState extends State<PrinterPage> {
   }
 
   Future<void> initBluetooth() async {
-    bluetoothPrint.startScan(timeout: Duration(seconds: 4));
+    bluetoothPrint.startScan(timeout: const Duration(seconds: 4));
 
     bool? isConnected = await bluetoothPrint.isConnected;
 
@@ -55,7 +55,6 @@ class _PrinterPageState extends State<PrinterPage> {
 
     if (isConnected!) {
       setState(() {
-        isConnected = true;
         _connected = true;
       });
     }
@@ -83,10 +82,10 @@ class _PrinterPageState extends State<PrinterPage> {
                   ),
                 ],
               ),
-              Divider(),
+              const Divider(),
               StreamBuilder<List<BluetoothDevice>>(
                 stream: bluetoothPrint.scanResults,
-                initialData: [],
+                initialData: const [],
                 builder: (c, snapshot) => Column(
                   children: snapshot.data!
                       .map((d) => ListTile(
@@ -99,7 +98,7 @@ class _PrinterPageState extends State<PrinterPage> {
                             },
                             trailing:
                                 _device != null && _device!.address == d.address
-                                    ? Icon(
+                                    ? const Icon(
                                         Icons.check,
                                         color: Colors.green,
                                       )
@@ -108,9 +107,9 @@ class _PrinterPageState extends State<PrinterPage> {
                       .toList(),
                 ),
               ),
-              Divider(),
+              const Divider(),
               Container(
-                padding: EdgeInsets.fromLTRB(20, 5, 20, 10),
+                padding: const EdgeInsets.fromLTRB(20, 5, 20, 10),
                 child: Column(
                   children: <Widget>[
                     Row(
@@ -125,12 +124,25 @@ class _PrinterPageState extends State<PrinterPage> {
                                       _device!.address != null) {
                                     isConnected = true;
                                     await bluetoothPrint.connect(_device!);
-                                    await DatabaseHelper.instance
-                                        .insertPrinter(PrinterModel(
-                                      name: _device!.name,
-                                      address: _device!.address,
-                                      type: _device!.type,
-                                    ));
+                                    var check = await DatabaseHelper.instance
+                                        .getPrinter();
+                                    if (check.isEmpty) {
+                                      DatabaseHelper.instance
+                                          .insertPrinter(PrinterModel(
+                                        id: 1,
+                                        name: _device!.name,
+                                        address: _device!.address,
+                                        type: _device!.type,
+                                      ));
+                                    } else {
+                                      DatabaseHelper.instance
+                                          .updatePrinter(PrinterModel(
+                                        id: 1,
+                                        name: _device!.name,
+                                        address: _device!.address,
+                                        type: _device!.type,
+                                      ));
+                                    }
                                   } else {
                                     setState(() {
                                       tips = 'please select device';
@@ -155,7 +167,7 @@ class _PrinterPageState extends State<PrinterPage> {
                       child: const Text('Print Test'),
                       onPressed: _connected
                           ? () async {
-                              Map<String, dynamic> config = Map();
+                              Map<String, dynamic> config = {};
                               List<LineText> list = [];
                               list.add(LineText(
                                   type: LineText.TYPE_TEXT,

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:bigsam_pos/utils/formater.dart';
 import 'package:bigsam_pos/utils/database.dart';
 import 'package:bigsam_pos/models/produk.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 class Produk extends StatefulWidget {
   const Produk({Key? key}) : super(key: key);
@@ -21,6 +22,7 @@ class _ProdukState extends State<Produk> {
   TextEditingController stokProdukController = TextEditingController();
   TextEditingController satuanProdukController = TextEditingController();
   TextEditingController kodeProdukController = TextEditingController();
+  TextEditingController modalProdukController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +156,8 @@ class _ProdukState extends State<Produk> {
                                                   produk.satuanProduk;
                                               kodeProdukController.text =
                                                   produk.kodeProduk;
+                                              modalProdukController.text =
+                                                  produk.hargaModal;
                                             });
                                           },
                                         ),
@@ -227,7 +231,8 @@ class _ProdukState extends State<Produk> {
                                 decimal: true),
                             inputFormatters: <TextInputFormatter>[
                               FilteringTextInputFormatter.digitsOnly,
-                              CurrencyPtBrInputFormatter()
+                              CurrencyTextInputFormatter(
+                                  locale: 'id_ID', decimalDigits: 0, symbol: '')
                             ],
                             decoration: const InputDecoration(
                               labelText: "Harga Produk",
@@ -236,6 +241,25 @@ class _ProdukState extends State<Produk> {
                             validator: (value) {
                               if (value!.isEmpty) {
                                 return 'Harga Produk Tidak Boleh Kosong';
+                              }
+                              return null;
+                            },
+                          ),
+                          TextFormField(
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            inputFormatters: <TextInputFormatter>[
+                              FilteringTextInputFormatter.digitsOnly,
+                              CurrencyTextInputFormatter(
+                                  locale: 'id_ID', decimalDigits: 0, symbol: '')
+                            ],
+                            decoration: const InputDecoration(
+                              labelText: "Harga Modal",
+                            ),
+                            controller: modalProdukController,
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return 'Modal Produk Tidak Boleh Kosong';
                               }
                               return null;
                             },
@@ -299,6 +323,8 @@ class _ProdukState extends State<Produk> {
                                                   satuanProdukController.text,
                                               kodeProduk:
                                                   kodeProdukController.text,
+                                              hargaModal:
+                                                  modalProdukController.text,
                                             ),
                                           )
                                         : await DatabaseHelper.instance
@@ -314,6 +340,8 @@ class _ProdukState extends State<Produk> {
                                                   satuanProdukController.text,
                                               kodeProduk:
                                                   kodeProdukController.text,
+                                              hargaModal:
+                                                  modalProdukController.text,
                                             ),
                                           );
                                     setState(() {
@@ -323,6 +351,7 @@ class _ProdukState extends State<Produk> {
                                       stokProdukController.text = "";
                                       satuanProdukController.text = "";
                                       kodeProdukController.text = "";
+                                      modalProdukController.text = "";
                                     });
                                   } catch (e) {
                                     setState(() {

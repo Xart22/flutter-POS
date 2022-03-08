@@ -37,10 +37,10 @@ class _KontakState extends State<Kontak> {
                   builder: (BuildContext context,
                       AsyncSnapshot<List<KontakModel>> snapshot) {
                     if (!snapshot.hasData) {
-                      return Center(child: Text('Loading...'));
+                      return const Center(child: Text('Loading...'));
                     }
                     return snapshot.data!.isEmpty
-                        ? Center(child: Text('Tidak Ada Kontak'))
+                        ? const Center(child: Text('Tidak Ada Kontak'))
                         : ListView(
                             children: snapshot.data!.map((kontak) {
                               return Center(
@@ -52,7 +52,7 @@ class _KontakState extends State<Kontak> {
                                     title: Text(kontak.nama),
                                     subtitle: Text(kontak.alamat),
                                     trailing: IconButton(
-                                      icon: Icon(Icons.edit),
+                                      icon: const Icon(Icons.edit),
                                       onPressed: () {
                                         setState(() {
                                           selectedId = kontak.id;
@@ -63,7 +63,7 @@ class _KontakState extends State<Kontak> {
                                         });
                                       },
                                     ),
-                                    leading: Icon(Icons.account_circle),
+                                    leading: const Icon(Icons.account_circle),
                                     onLongPress: () {
                                       setState(() {
                                         DatabaseHelper.instance
@@ -143,7 +143,7 @@ class _KontakState extends State<Kontak> {
                     ),
                     const SizedBox(height: 10),
                     ElevatedButton(
-                      child: Text('Save'),
+                      child: const Text('Save'),
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
                           selectedId != null

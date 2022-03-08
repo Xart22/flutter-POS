@@ -3,14 +3,13 @@ class OutletModel {
   String nama_toko;
   String alamat_toko;
   String no_hp;
-  int pajak;
 
-  OutletModel(
-      {this.id,
-      required this.nama_toko,
-      required this.alamat_toko,
-      required this.no_hp,
-      required this.pajak});
+  OutletModel({
+    this.id,
+    required this.nama_toko,
+    required this.alamat_toko,
+    required this.no_hp,
+  });
 
   factory OutletModel.fromMap(Map<String, dynamic> json) {
     return OutletModel(
@@ -18,7 +17,6 @@ class OutletModel {
       nama_toko: json['nama_toko'],
       alamat_toko: json['alamat_toko'],
       no_hp: json['no_hp'],
-      pajak: json['pajak'],
     );
   }
 
@@ -28,7 +26,6 @@ class OutletModel {
       'nama_toko': nama_toko,
       'alamat_toko': alamat_toko,
       'no_hp': no_hp,
-      'pajak': pajak,
     };
   }
 }

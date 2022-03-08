@@ -40,19 +40,17 @@ class _FormTokoState extends State<FormToko> {
           builder: (BuildContext context,
               AsyncSnapshot<List<OutletModel>> snapshot) {
             if (!snapshot.hasData) {
-              return Center(child: Text('Loading...'));
+              return const Center(child: Text('Loading...'));
             }
             if (snapshot.data!.isEmpty) {
               namaController.text = '';
               alamatController.text = '';
               nomorController.text = '';
-              pajakController.text = '';
             } else {
               selectedId = snapshot.data![0].id;
               namaController.text = snapshot.data![0].nama_toko;
               alamatController.text = snapshot.data![0].alamat_toko;
               nomorController.text = snapshot.data![0].no_hp;
-              pajakController.text = snapshot.data![0].pajak.toString();
             }
 
             return Container(
@@ -111,19 +109,8 @@ class _FormTokoState extends State<FormToko> {
                       },
                     ),
                     const SizedBox(height: 10),
-                    TextFormField(
-                      controller: pajakController,
-                      decoration: const InputDecoration(
-                        labelText: 'Pajak',
-                        hintText: 'Pajak',
-                        border: OutlineInputBorder(),
-                        icon: Icon(Icons.attach_money),
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 10),
                     ElevatedButton(
-                      child: Text('Save'),
+                      child: const Text('Save'),
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
                           selectedId != null;
@@ -136,7 +123,6 @@ class _FormTokoState extends State<FormToko> {
                                     nama_toko: namaController.text,
                                     alamat_toko: alamatController.text,
                                     no_hp: nomorController.text,
-                                    pajak: int.parse(pajakController.text),
                                   ),
                                 )
                               : await DatabaseHelper.instance.insertOutlet(
@@ -144,14 +130,13 @@ class _FormTokoState extends State<FormToko> {
                                     nama_toko: namaController.text,
                                     alamat_toko: alamatController.text,
                                     no_hp: nomorController.text,
-                                    pajak: int.parse(pajakController.text),
                                   ),
                                 );
 
                           Fluttertoast.showToast(msg: 'Data Berhasil Disimpan');
                           Navigator.pop(context);
                         } catch (e) {
-                          print(e);
+                          Fluttertoast.showToast(msg: 'Data Gagal Disimpan');
                         }
                       },
                     ),

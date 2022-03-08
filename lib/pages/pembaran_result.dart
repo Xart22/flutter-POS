@@ -1,30 +1,33 @@
 import 'package:bigsam_pos/global/cart.dart';
-import 'package:bigsam_pos/global/outlet.dart';
-import 'package:bigsam_pos/global/printer.dart';
 import 'package:bluetooth_print/bluetooth_print.dart';
 import 'package:bluetooth_print/bluetooth_print_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:animated_check/animated_check.dart';
+import '../models/outlet.dart';
+import 'package:bigsam_pos/utils/database.dart';
 
+import '../global/auth.dart';
 import '../main.dart';
 
 class PembayaranResult extends StatelessWidget {
   const PembayaranResult(
       {required this.total,
       required this.uang,
-      required this.ppn,
       required this.subTotal,
+      required this.discount,
       Key? key})
       : super(key: key);
   final String total;
   final String uang;
-  final String ppn;
+
   final String subTotal;
+  final String discount;
 
   @override
   Widget build(BuildContext context) {
-    _insertTransaksi();
+    // _printReceipt(subTotal, ppn, total, uang, _calculate(total, uang));
+    _getData();
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
@@ -39,7 +42,7 @@ class PembayaranResult extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Expanded(flex: 2, child: ChecklisAnimation()),
+                    const Expanded(flex: 2, child: ChecklisAnimation()),
                     Expanded(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -158,8 +161,8 @@ class PembayaranResult extends StatelessWidget {
                           Expanded(
                               child: ElevatedButton(
                                   onPressed: () async {
-                                    _printReceipt(subTotal, ppn, total, uang,
-                                        _calculate(total, uang));
+                                    _printReceipt(subTotal, total, uang,
+                                        _calculate(total, uang), discount);
                                   },
                                   child: const Text('Cetak Struk'))),
                           const SizedBox(width: 10),
@@ -167,7 +170,11 @@ class PembayaranResult extends StatelessWidget {
                               child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                       primary: Colors.green),
-                                  onPressed: () {
+                                  onPressed: () async {
+                                    await DatabaseHelper.instance
+                                        .deleteCartByKodeTransaksi(
+                                            cartGlobal![0].kode_transaksi);
+                                    cartGlobal!.clear();
                                     Navigator.pushNamedAndRemoveUntil(
                                       context,
                                       MyStatefulWidget.routeName,
@@ -207,8 +214,6 @@ _formating(double value) {
   String newText = formatter.format(value).replaceAll('Rp. ', '');
   return newText;
 }
-
-_insertTransaksi() async {}
 
 class ChecklisAnimation extends StatefulWidget {
   const ChecklisAnimation({Key? key}) : super(key: key);
@@ -273,18 +278,24 @@ writeSpace(String msg1, String msg2) {
   return space;
 }
 
-_calculateBasePrice(String total, int jumlahDb) {
-  var total_harga = double.parse(total.replaceAll('.', ''));
-  var harga_produk = total_harga / jumlahDb;
-  return _formating(harga_produk);
+late List<OutletModel> _outlet;
+_getData() async {
+  var data = await DatabaseHelper.instance.getOutlet();
+  _outlet = data;
 }
 
-_printReceipt(String subTotal, String ppn, String total, String uang,
-    String kembali) async {
+_calculateBasePrice(String total, int jumlahDb) {
+  var totalHarga = double.parse(total.replaceAll('.', ''));
+  var hargaProduk = totalHarga / jumlahDb;
+  return _formating(hargaProduk);
+}
+
+_printReceipt(String subTotal, String total, String uang, String kembali,
+    String discount) async {
   uang == '' ? uang = total : uang;
-  Map<String, dynamic> config = Map();
+  Map<String, dynamic> config = {};
   List<LineText> list = [];
-  for (var element in outletGlobal!) {
+  for (var element in _outlet) {
     list.add(LineText(
         type: LineText.TYPE_TEXT,
         content: element.nama_toko,
@@ -306,17 +317,17 @@ _printReceipt(String subTotal, String ppn, String total, String uang,
         linefeed: 1));
     list.add(LineText(
         type: LineText.TYPE_TEXT,
-        content: 'Kasir',
+        content: 'kasir',
         align: LineText.ALIGN_LEFT,
         linefeed: 0));
     list.add(LineText(
         type: LineText.TYPE_TEXT,
-        content: writeSpace('kasir', 'Tes'),
+        content: writeSpace('kasir', userGlobal!.toUpperCase()),
         align: LineText.ALIGN_LEFT,
         linefeed: 0));
     list.add(LineText(
         type: LineText.TYPE_TEXT,
-        content: 'Tes',
+        content: userGlobal!.toUpperCase(),
         align: LineText.ALIGN_LEFT,
         linefeed: 0));
     list.add(LineText(linefeed: 1));
@@ -420,30 +431,28 @@ _printReceipt(String subTotal, String ppn, String total, String uang,
       linefeed: 0));
 
   //END SUB TOTAL WRAP
-  //PPN WRAP
-  if (ppn != '0') {
-    list.add(LineText(
-        type: LineText.TYPE_TEXT,
-        content: '--------------------------------',
-        align: LineText.ALIGN_CENTER,
-        linefeed: 1));
-    list.add(LineText(
-        type: LineText.TYPE_TEXT,
-        content: 'PPN',
-        align: LineText.ALIGN_LEFT,
-        linefeed: 0));
-    list.add(LineText(
-        type: LineText.TYPE_TEXT,
-        content: writeSpace('PPN', ppn),
-        align: LineText.ALIGN_LEFT,
-        linefeed: 0));
-    list.add(LineText(
-        type: LineText.TYPE_TEXT,
-        content: ppn,
-        align: LineText.ALIGN_LEFT,
-        linefeed: 0));
-  }
-  //END PPN WRAP
+  //DISCOUNT WRAP
+  list.add(LineText(
+      type: LineText.TYPE_TEXT,
+      content: '--------------------------------',
+      align: LineText.ALIGN_CENTER,
+      linefeed: 1));
+  list.add(LineText(
+      type: LineText.TYPE_TEXT,
+      content: 'Discount',
+      align: LineText.ALIGN_LEFT,
+      linefeed: 0));
+  list.add(LineText(
+      type: LineText.TYPE_TEXT,
+      content: writeSpace('Discount', '-' + discount),
+      align: LineText.ALIGN_LEFT,
+      linefeed: 0));
+  list.add(LineText(
+      type: LineText.TYPE_TEXT,
+      content: '-' + discount,
+      align: LineText.ALIGN_LEFT,
+      linefeed: 0));
+  // END DISCOUNT WRAP
   //TOTAL WRAP
   list.add(LineText(
       type: LineText.TYPE_TEXT,
@@ -506,6 +515,7 @@ _printReceipt(String subTotal, String ppn, String total, String uang,
       linefeed: 0));
   //END KEMBALIAN WRAP
   //TERIMA KASIH WRAP
+  list.add(LineText(linefeed: 1));
   list.add(LineText(linefeed: 1));
   list.add(LineText(
       type: LineText.TYPE_TEXT,

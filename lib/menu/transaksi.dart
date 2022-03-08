@@ -1,6 +1,8 @@
-import 'package:bigsam_pos/global/printer.dart';
+import 'dart:math';
+
 import 'package:bigsam_pos/models/cart.dart';
 import 'package:bigsam_pos/global/cart.dart';
+import 'package:bigsam_pos/models/update_stock.dart';
 import 'package:bigsam_pos/pages/pembayaran.dart';
 import 'package:bigsam_pos/wiget/subtotal.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +23,6 @@ class _TransaksiState extends State<Transaksi> {
   int? selectedId;
   String totalState = "0";
   String? ppnTotal;
-  String? kodeTransaksi;
   String searchProduk = "";
 
   TextEditingController _controllerJumlah = TextEditingController();
@@ -30,8 +31,6 @@ class _TransaksiState extends State<Transaksi> {
   TextEditingController stokProdukController = TextEditingController();
   TextEditingController satuanProdukController = TextEditingController();
   TextEditingController kodeProdukController = TextEditingController();
-  static final DateTime now = DateTime.now();
-  static final DateFormat formatter = DateFormat('yyyy-MM-dd');
   String? _kodeProduk;
 
   @override
@@ -152,35 +151,72 @@ class _TransaksiState extends State<Transaksi> {
                                       setState(() {
                                         _kodeProduk = produk.kodeProduk;
                                       });
-                                      var check = await DatabaseHelper.instance
-                                          .getCartByKode(
-                                              _kodeProduk.toString());
-                                      check.isNotEmpty
-                                          ? await DatabaseHelper.instance
+                                      if (int.parse(produk.stockProduk) == 0) {
+                                        Fluttertoast.showToast(
+                                            msg:
+                                                "Stok Produk Habis Mohon Untuk Update Stock",
+                                            toastLength: Toast.LENGTH_SHORT,
+                                            gravity: ToastGravity.BOTTOM,
+                                            timeInSecForIosWeb: 1,
+                                            backgroundColor: Colors.red,
+                                            textColor: Colors.white,
+                                            fontSize: 16.0);
+                                      } else {
+                                        var check = await DatabaseHelper
+                                            .instance
+                                            .getCartByKode(
+                                                _kodeProduk.toString());
+                                        if (check.isNotEmpty) {
+                                          await DatabaseHelper.instance
                                               .updateCart(CartModel(
-                                              kode_transaksi: produk.kodeProduk,
-                                              kode_produk: produk.kodeProduk,
-                                              jumlah: check[0].jumlah + 1,
-                                              satuan: produk.satuanProduk,
-                                              total_harga: _formating(
-                                                  (double.parse(
-                                                          check[0]
-                                                              .total_harga
-                                                              .replaceAll(
-                                                                  '.', '')) +
-                                                      double.parse(produk
-                                                          .hargaProduk
-                                                          .replaceAll(
-                                                              '.', '')))),
-                                            ))
-                                          : await DatabaseHelper.instance
+                                            kode_transaksi:
+                                                check[0].kode_transaksi,
+                                            kode_produk: produk.kodeProduk,
+                                            jumlah: check[0].jumlah + 1,
+                                            satuan: produk.satuanProduk,
+                                            total_harga: _formating(
+                                                (double.parse(check[0]
+                                                        .total_harga
+                                                        .replaceAll('.', '')) +
+                                                    double.parse(produk
+                                                        .hargaProduk
+                                                        .replaceAll('.', '')))),
+                                          ));
+                                          await DatabaseHelper.instance
+                                              .updateStock(UpdateStock(
+                                            kodeProduk: produk.kodeProduk,
+                                            stockProduk:
+                                                (int.parse(produk.stockProduk) -
+                                                        1)
+                                                    .toString(),
+                                          ));
+                                        } else {
+                                          var kodeTransaksi =
+                                              await DatabaseHelper.instance
+                                                  .getCart();
+
+                                          await DatabaseHelper.instance
                                               .insertCart(CartModel(
-                                              kode_transaksi: produk.kodeProduk,
-                                              kode_produk: produk.kodeProduk,
-                                              jumlah: 1,
-                                              satuan: produk.satuanProduk,
-                                              total_harga: produk.hargaProduk,
-                                            ));
+                                            kode_transaksi:
+                                                kodeTransaksi.isNotEmpty
+                                                    ? kodeTransaksi[0]
+                                                        .kode_transaksi
+                                                    : _generateKodeTransaksi(),
+                                            kode_produk: produk.kodeProduk,
+                                            jumlah: 1,
+                                            satuan: produk.satuanProduk,
+                                            total_harga: produk.hargaProduk,
+                                          ));
+                                          await DatabaseHelper.instance
+                                              .updateStock(UpdateStock(
+                                            kodeProduk: produk.kodeProduk,
+                                            stockProduk:
+                                                (int.parse(produk.stockProduk) -
+                                                        1)
+                                                    .toString(),
+                                          ));
+                                        }
+                                      }
                                       setState(() {});
                                     },
                                   ),
@@ -192,28 +228,156 @@ class _TransaksiState extends State<Transaksi> {
                                 produk.kodeProduk
                                     .toLowerCase()
                                     .contains(searchProduk.toLowerCase())) {
-                              return ListTile(
-                                title: Text(produk.namaProduk),
-                                subtitle: Text('Stok: ${produk.stockProduk}'),
-                                trailing: Text('Rp. ${produk.hargaProduk}'),
-                                onTap: () {
-                                  setState(() {
-                                    _kodeProduk = produk.kodeProduk;
-                                    nameProdukController.text =
-                                        produk.namaProduk;
-                                    hargaProdukController.text =
-                                        produk.hargaProduk;
-                                    stokProdukController.text =
-                                        produk.stockProduk;
-                                    satuanProdukController.text =
-                                        produk.satuanProduk;
-                                    kodeProdukController.text =
-                                        produk.kodeProduk;
-                                  });
-                                },
+                              return Center(
+                                child: Card(
+                                  color: selectedId == produk.id
+                                      ? Colors.white70
+                                      : Colors.white,
+                                  child: ListTile(
+                                    title: Row(
+                                      children: [
+                                        Text(
+                                          produk.namaProduk,
+                                          style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                    subtitle: Row(
+                                      children: [
+                                        Text(
+                                          produk.kodeProduk,
+                                          style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        const Text(
+                                          'Harga : ',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          produk.hargaProduk,
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        const Text(
+                                          'Stok : ',
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          produk.stockProduk,
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        const Text(
+                                          'Satuan : ',
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          produk.satuanProduk,
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                    onTap: () async {
+                                      setState(() {
+                                        _kodeProduk = produk.kodeProduk;
+                                      });
+                                      if (int.parse(produk.stockProduk) == 0) {
+                                        Fluttertoast.showToast(
+                                            msg:
+                                                "Stok Produk Habis Mohon Untuk Update Stock",
+                                            toastLength: Toast.LENGTH_SHORT,
+                                            gravity: ToastGravity.BOTTOM,
+                                            timeInSecForIosWeb: 1,
+                                            backgroundColor: Colors.red,
+                                            textColor: Colors.white,
+                                            fontSize: 16.0);
+                                      } else {
+                                        var check = await DatabaseHelper
+                                            .instance
+                                            .getCartByKode(
+                                                _kodeProduk.toString());
+                                        if (check.isNotEmpty) {
+                                          await DatabaseHelper.instance
+                                              .updateCart(CartModel(
+                                            kode_transaksi:
+                                                check[0].kode_transaksi,
+                                            kode_produk: produk.kodeProduk,
+                                            jumlah: check[0].jumlah + 1,
+                                            satuan: produk.satuanProduk,
+                                            total_harga: _formating(
+                                                (double.parse(check[0]
+                                                        .total_harga
+                                                        .replaceAll('.', '')) +
+                                                    double.parse(produk
+                                                        .hargaProduk
+                                                        .replaceAll('.', '')))),
+                                          ));
+                                          await DatabaseHelper.instance
+                                              .updateStock(UpdateStock(
+                                            kodeProduk: produk.kodeProduk,
+                                            stockProduk:
+                                                (int.parse(produk.stockProduk) -
+                                                        1)
+                                                    .toString(),
+                                          ));
+                                        } else {
+                                          await DatabaseHelper.instance
+                                              .insertCart(CartModel(
+                                            kode_transaksi:
+                                                _generateKodeTransaksi(),
+                                            kode_produk: produk.kodeProduk,
+                                            jumlah: 1,
+                                            satuan: produk.satuanProduk,
+                                            total_harga: produk.hargaProduk,
+                                          ));
+                                          await DatabaseHelper.instance
+                                              .updateStock(UpdateStock(
+                                            kodeProduk: produk.kodeProduk,
+                                            stockProduk:
+                                                (int.parse(produk.stockProduk) -
+                                                        1)
+                                                    .toString(),
+                                          ));
+                                        }
+                                      }
+                                      setState(() {});
+                                    },
+                                  ),
+                                ),
                               );
                             } else {
-                              return Container();
+                              return Container(
+                                padding: const EdgeInsets.all(10),
+                                margin: const EdgeInsets.only(top: 20),
+                                child: const Center(
+                                  child: Text('Produk tidak ditemukan',
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              );
                             }
                           }).toList(),
                         );
@@ -275,7 +439,7 @@ class _TransaksiState extends State<Transaksi> {
                                           cart.jumlah.toString();
                                     });
                                     showModalBottomSheet(
-                                      shape: RoundedRectangleBorder(
+                                      shape: const RoundedRectangleBorder(
                                           borderRadius: BorderRadius.vertical(
                                               top: Radius.circular(25.0))),
                                       backgroundColor: Colors.white,
@@ -289,10 +453,9 @@ class _TransaksiState extends State<Transaksi> {
                                               CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: <Widget>[
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 12.0),
+                                            const Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 12.0),
                                               child: Text('Masukan Qty Produk',
                                                   style: TextStyle(
                                                       fontSize: 20,
@@ -300,7 +463,7 @@ class _TransaksiState extends State<Transaksi> {
                                                           FontWeight.bold,
                                                       color: Colors.black)),
                                             ),
-                                            SizedBox(
+                                            const SizedBox(
                                               height: 8.0,
                                             ),
                                             Padding(
@@ -314,7 +477,7 @@ class _TransaksiState extends State<Transaksi> {
                                                     TextField(
                                                       controller:
                                                           _controllerJumlah,
-                                                      style: TextStyle(
+                                                      style: const TextStyle(
                                                           fontSize: 20,
                                                           fontWeight:
                                                               FontWeight.bold,
@@ -324,26 +487,80 @@ class _TransaksiState extends State<Transaksi> {
                                                     ),
                                                     ElevatedButton(
                                                       onPressed: () async {
-                                                        await DatabaseHelper.instance.updateCart(CartModel(
-                                                            kode_transaksi: cart
-                                                                .kode_transaksi,
-                                                            kode_produk: cart
-                                                                .kode_produk,
-                                                            jumlah: int.parse(
-                                                                _controllerJumlah
-                                                                    .text),
-                                                            satuan: cart.satuan,
-                                                            total_harga: _calculate(
-                                                                cart
-                                                                    .total_harga,
-                                                                cart.jumlah,
-                                                                _controllerJumlah
-                                                                    .text)));
+                                                        var stockProduk =
+                                                            await DatabaseHelper
+                                                                .instance
+                                                                .getProdukByKode(
+                                                                    cart.kode_produk);
+                                                        if (int.parse(stockProduk[
+                                                                    0]
+                                                                .stockProduk) ==
+                                                            0) {
+                                                          Fluttertoast.showToast(
+                                                              msg:
+                                                                  "Stock produk habis",
+                                                              toastLength: Toast
+                                                                  .LENGTH_SHORT,
+                                                              gravity:
+                                                                  ToastGravity
+                                                                      .BOTTOM,
+                                                              timeInSecForIosWeb:
+                                                                  1,
+                                                              backgroundColor:
+                                                                  Colors.red,
+                                                              textColor:
+                                                                  Colors.white,
+                                                              fontSize: 16.0);
+                                                        } else {
+                                                          await DatabaseHelper.instance.updateCart(CartModel(
+                                                              kode_transaksi: cart
+                                                                  .kode_transaksi,
+                                                              kode_produk: cart
+                                                                  .kode_produk,
+                                                              jumlah: int.parse(
+                                                                  _controllerJumlah
+                                                                      .text),
+                                                              satuan:
+                                                                  cart.satuan,
+                                                              total_harga: _calculate(
+                                                                  cart
+                                                                      .total_harga,
+                                                                  cart.jumlah,
+                                                                  _controllerJumlah
+                                                                      .text)));
 
+                                                          var finalStock = cart
+                                                                      .jumlah <
+                                                                  int.parse(
+                                                                      _controllerJumlah
+                                                                          .text)
+                                                              ? int.parse(stockProduk[
+                                                                          0]
+                                                                      .stockProduk) -
+                                                                  int.parse(
+                                                                      _controllerJumlah
+                                                                          .text)
+                                                              : int.parse(stockProduk[
+                                                                          0]
+                                                                      .stockProduk) +
+                                                                  (int.parse(
+                                                                      _controllerJumlah
+                                                                          .text));
+                                                          await DatabaseHelper
+                                                              .instance
+                                                              .updateStock(UpdateStock(
+                                                                  kodeProduk:
+                                                                      stockProduk[
+                                                                              0]
+                                                                          .kodeProduk,
+                                                                  stockProduk:
+                                                                      finalStock
+                                                                          .toString()));
+                                                        }
                                                         setState(() {});
                                                         Navigator.pop(context);
                                                       },
-                                                      child: Text(
+                                                      child: const Text(
                                                         'Tambahkan',
                                                         style: TextStyle(
                                                             color:
@@ -367,10 +584,21 @@ class _TransaksiState extends State<Transaksi> {
                                       ),
                                     );
                                   },
-                                  onLongPress: () {
-                                    DatabaseHelper.instance
-                                        .deleteCart(cart.kode_produk);
-
+                                  onLongPress: () async {
+                                    await DatabaseHelper.instance
+                                        .deleteCartByKodeProduk(
+                                            cart.kode_produk);
+                                    var stockProduk = await DatabaseHelper
+                                        .instance
+                                        .getProdukByKode(cart.kode_produk);
+                                    await DatabaseHelper.instance.updateStock(
+                                        UpdateStock(
+                                            kodeProduk: cart.kode_produk,
+                                            stockProduk: (int.parse(
+                                                        stockProduk[0]
+                                                            .stockProduk) +
+                                                    cart.jumlah)
+                                                .toString()));
                                     setState(() {});
                                   },
                                 );
@@ -405,7 +633,7 @@ class _TransaksiState extends State<Transaksi> {
                               style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white))))
+                                  color: Colors.white)))),
                 ]),
               ),
             ),
@@ -421,17 +649,22 @@ _formating(double value) {
   return newText;
 }
 
-_generateKodeStruk() {
-  var now = DateTime.now();
-  var formatter = DateFormat.yMd();
-  String formatted = formatter.format(now);
-  return formatted.replaceAll('/', '');
+String _generateKodeTransaksi() {
+  var now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+  String formatted = now.toString() + getRandomString(4);
+  return formatted;
 }
 
 _calculate(String total, int jumlahDb, String jumlahTambah) {
-  var total_harga = double.parse(total.replaceAll('.', ''));
-  var harga_produk = total_harga / jumlahDb;
+  var totalHarga = double.parse(total.replaceAll('.', ''));
+  var hargaProduk = totalHarga / jumlahDb;
   var jumlah = int.parse(jumlahTambah);
-  var total_harga_baru = harga_produk * jumlah;
-  return _formating(total_harga_baru);
+  var totalHargaBaru = hargaProduk * jumlah;
+  return _formating(totalHargaBaru);
 }
+
+const _chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+Random _rnd = Random();
+
+String getRandomString(int length) => String.fromCharCodes(Iterable.generate(
+    length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))));

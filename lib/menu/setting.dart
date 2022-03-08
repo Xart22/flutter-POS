@@ -1,3 +1,5 @@
+import 'package:bigsam_pos/menu/user.dart';
+import 'package:bigsam_pos/pages/beban.dart';
 import 'package:bigsam_pos/pages/print_page.dart';
 import 'package:flutter/material.dart';
 
@@ -13,8 +15,8 @@ class Setting extends StatelessWidget {
         child: ListView(
           children: <Widget>[
             ListTile(
-              title: Text('Informasi Toko'),
-              trailing: Icon(Icons.store),
+              title: const Text('Informasi Toko'),
+              trailing: const Icon(Icons.store),
               onTap: () {
                 Navigator.push(
                     context,
@@ -24,17 +26,27 @@ class Setting extends StatelessWidget {
             ),
             ListTile(
               title: const Text('User Pengguna'),
-              trailing: Icon(Icons.person),
+              trailing: const Icon(Icons.person),
               onTap: () {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const InformasiToko()));
+                        builder: (context) => const UserPengguna()));
+              },
+            ),
+            ListTile(
+              title: const Text('Beban'),
+              trailing: const Icon(Icons.attach_money),
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const InfromasiBeban()));
               },
             ),
             ListTile(
               title: const Text('Printer'),
-              trailing: Icon(Icons.print),
+              trailing: const Icon(Icons.print),
               onTap: () {
                 Navigator.push(
                     context,

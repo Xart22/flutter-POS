@@ -23,10 +23,9 @@ class Subtotal extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  const Text(
                     'Sub Total : ',
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     'Rp. ' + _formating(total),

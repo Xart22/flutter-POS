@@ -5,6 +5,7 @@ class ProdukModel {
   final String hargaProduk;
   final String stockProduk;
   final String satuanProduk;
+  final String hargaModal;
 
   ProdukModel({
     this.id,
@@ -13,6 +14,7 @@ class ProdukModel {
     required this.hargaProduk,
     required this.stockProduk,
     required this.satuanProduk,
+    required this.hargaModal,
   });
 
   factory ProdukModel.fromMap(Map<String, dynamic> json) => ProdukModel(
@@ -22,6 +24,7 @@ class ProdukModel {
         hargaProduk: json["harga_produk"],
         stockProduk: json["stock_produk"],
         satuanProduk: json["satuan_produk"],
+        hargaModal: json["modal_produk"],
       );
 
   Map<String, dynamic> toMap() => {
@@ -31,5 +34,12 @@ class ProdukModel {
         "harga_produk": hargaProduk,
         "stock_produk": stockProduk,
         "satuan_produk": satuanProduk,
+        "modal_produk": hargaModal,
       };
+
+  Map<String, dynamic> onlyStock() {
+    return {
+      "stock_produk": stockProduk,
+    };
+  }
 }
