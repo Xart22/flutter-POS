@@ -12,6 +12,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 
+import 'package:printing/printing.dart';
+
 class LaporanPage extends StatefulWidget {
   const LaporanPage({Key? key}) : super(key: key);
 
@@ -31,7 +33,7 @@ class _LaporanPageState extends State<LaporanPage> {
         .getLaporanByTanggal(startDate.text, endDate.text);
 
     final List<BebanModel> bebanData = await DatabaseHelper.instance.getBeban();
-    late double totalDiskon;
+    double? totalDiskon;
     for (var item in data) {
       totalDiskon = double.parse(item.diskon.replaceAll('.', ''));
     }
@@ -89,14 +91,14 @@ class _LaporanPageState extends State<LaporanPage> {
     final pendapatanKotor = _calculatePendapatanKotor(data);
 
     final totalTransaksi =
-        _cakculateTotalTransaksi(pendapatanKotor, _formating(totalDiskon));
+        _cakculateTotalTransaksi(pendapatanKotor, _formating(totalDiskon!));
 
     final totalModal = _calculateModal(data);
 
     final totalBeban = _calculateBeban(bebanData);
 
     final total = _calculateTotal(pendapatanKotor, totalModal, totalBeban);
-
+    final font = await PdfGoogleFonts.nunitoExtraLight();
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -106,56 +108,76 @@ class _LaporanPageState extends State<LaporanPage> {
           pw.Text(
             'Laporan Penjualan',
             style: pw.TextStyle(
-              fontSize: 20,
-              fontWeight: pw.FontWeight.bold,
-            ),
+                fontSize: 20, fontWeight: pw.FontWeight.bold, font: font),
           ),
           pw.Text(
             'Periode ${startDate.text.isEmpty ? 'Semua' : startDate.text} - ${endDate.text.isEmpty ? 'Semua' : endDate.text}',
             style: pw.TextStyle(
-              fontSize: 20,
-              fontWeight: pw.FontWeight.bold,
-            ),
+                fontSize: 20, fontWeight: pw.FontWeight.bold, font: font),
           ),
           pw.SizedBox(height: 20),
           pw.Table(
             children: [
               pw.TableRow(children: [
-                pw.Text('No'),
-                pw.Text('Tanggal'),
-                pw.Text('Kode Transaksi'),
-                pw.Text('Kode Produk'),
-                pw.Text('Nama Produk'),
-                pw.Text('Jumlah'),
-                pw.Text('Total'),
+                pw.Text('No', style: pw.TextStyle(fontSize: 12, font: font)),
+                pw.Text('Tanggal',
+                    style: pw.TextStyle(fontSize: 12, font: font)),
+                pw.Text('Kode Transaksi',
+                    style: pw.TextStyle(fontSize: 12, font: font)),
+                pw.Text('Kode Produk',
+                    style: pw.TextStyle(fontSize: 12, font: font)),
+                pw.Text('Nama Produk',
+                    style: pw.TextStyle(fontSize: 12, font: font)),
+                pw.Text('Jumlah',
+                    style: pw.TextStyle(fontSize: 12, font: font)),
+                pw.Text('Total', style: pw.TextStyle(fontSize: 12, font: font)),
               ]),
               ...data.map((e) {
                 counter++;
                 return pw.TableRow(children: [
-                  pw.Text((counter).toString()),
-                  pw.Text(e.tanggal_transaksi),
-                  pw.Text(e.kode_transaksi),
-                  pw.Text(e.kode_produk),
-                  pw.Text(e.namaProduk),
-                  pw.Text(e.jumlah.toString()),
-                  pw.Text(e.total_harga.toString()),
+                  pw.Text((counter).toString(),
+                      style: pw.TextStyle(fontSize: 12, font: font)),
+                  pw.Text(e.tanggal_transaksi,
+                      style: pw.TextStyle(fontSize: 12, font: font)),
+                  pw.Text(e.kode_transaksi,
+                      style: pw.TextStyle(fontSize: 12, font: font)),
+                  pw.Text(e.kode_produk,
+                      style: pw.TextStyle(fontSize: 12, font: font)),
+                  pw.Text(e.namaProduk,
+                      style: pw.TextStyle(fontSize: 12, font: font)),
+                  pw.Text(e.jumlah.toString(),
+                      style: pw.TextStyle(fontSize: 12, font: font)),
+                  pw.Text(e.total_harga.toString(),
+                      style: pw.TextStyle(fontSize: 12, font: font)),
                 ]);
               }),
             ],
           ),
           pw.SizedBox(height: 10),
-          pw.Text('Total Jumlah Transaksi :${countData.length}'),
-          pw.Text('Total Transaksi : $pendapatanKotor'),
-          pw.Text('Total diskon : Rp.  ${_formating(totalDiskon)} '),
-          pw.Text('Total Pendatapatan Kotor : Rp. $totalTransaksi'),
-          pw.Text('Total Pengeluaran Modal : Rp. $totalModal'),
-          pw.Text('Sewa Gedung : Rp. ${bebanData[0].hargaSewa}'),
-          pw.Text('Listrik : Rp. ${bebanData[0].hargaListrik}'),
-          pw.Text('Internet : Rp. ${bebanData[0].hargaInternet}'),
-          pw.Text('Pulsa : Rp. ${bebanData[0].hargaPulsa}'),
-          pw.Text('Total Gajih Karyawan : Rp. ${bebanData[0].gaji}'),
-          pw.Text('Lain - Lain : Rp. ${bebanData[0].hargaLain}'),
-          pw.Text('Total Pendatapatan bersih : Rp.  $total'),
+          pw.Text('Total Jumlah Transaksi :${countData.length}',
+              style: pw.TextStyle(fontSize: 12, font: font)),
+          pw.Text('Total Transaksi : $pendapatanKotor',
+              style: pw.TextStyle(fontSize: 12, font: font)),
+          pw.Text('Total diskon : Rp.  ${_formating(totalDiskon!)} ',
+              style: pw.TextStyle(fontSize: 12, font: font)),
+          pw.Text('Total Pendatapatan Kotor : Rp. $totalTransaksi',
+              style: pw.TextStyle(fontSize: 12, font: font)),
+          pw.Text('Total Pengeluaran Modal : Rp. $totalModal',
+              style: pw.TextStyle(fontSize: 12, font: font)),
+          pw.Text('Sewa Gedung : Rp. ${bebanData[0].hargaSewa}',
+              style: pw.TextStyle(fontSize: 12, font: font)),
+          pw.Text('Listrik : Rp. ${bebanData[0].hargaListrik}',
+              style: pw.TextStyle(fontSize: 12, font: font)),
+          pw.Text('Internet : Rp. ${bebanData[0].hargaInternet}',
+              style: pw.TextStyle(fontSize: 12, font: font)),
+          pw.Text('Pulsa : Rp. ${bebanData[0].hargaPulsa}',
+              style: pw.TextStyle(fontSize: 12, font: font)),
+          pw.Text('Total Gajih Karyawan : Rp. ${bebanData[0].gaji}',
+              style: pw.TextStyle(fontSize: 12, font: font)),
+          pw.Text('Lain - Lain : Rp. ${bebanData[0].hargaLain}',
+              style: pw.TextStyle(fontSize: 12, font: font)),
+          pw.Text('Total Pendatapatan bersih : Rp.  $total',
+              style: pw.TextStyle(fontSize: 12, font: font)),
         ]));
       }),
     );

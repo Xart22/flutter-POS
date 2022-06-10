@@ -57,7 +57,10 @@ class _PembayaranState extends State<Pembayaran> {
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 const Text(
                   'Sub Total',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Roboto'),
                 ),
                 Text(
                   'Rp. ${widget.total}',
@@ -73,7 +76,10 @@ class _PembayaranState extends State<Pembayaran> {
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 const Text(
                   'Discount',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Roboto'),
                 ),
                 Text(
                   'Rp. $discount',
@@ -258,7 +264,8 @@ class Total extends StatelessWidget {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
       const Text(
         'Total',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        style: TextStyle(
+            fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Roboto'),
       ),
       Text(
         'Rp. $subtotal',

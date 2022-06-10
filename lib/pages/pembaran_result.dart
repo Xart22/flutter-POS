@@ -237,7 +237,7 @@ class _ChecklisAnimationState extends State<ChecklisAnimation>
         parent: _animationController, curve: Curves.easeInOutCirc));
 
     WidgetsBinding.instance
-        ?.addPostFrameCallback((_) => _animationController.forward());
+        .addPostFrameCallback((_) => _animationController.forward());
   }
 
   @override
@@ -261,7 +261,8 @@ class _ChecklisAnimationState extends State<ChecklisAnimation>
         const SizedBox(height: 10),
         const Text(
           'Pembayaran Berhasil',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Roboto'),
         ),
       ],
     ));
